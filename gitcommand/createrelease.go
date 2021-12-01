@@ -7,41 +7,12 @@ import (
 	"fmt"
 	"github.com/google/go-github/v41/github"
 	"log"
-	"net/http"
 	"os"
 	"os/exec"
-	"regexp"
 	"time"
 )
 
 type gitTransport struct{}
-
-func (trans *gitTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	req.Header.Add("Authorization", fmt.Sprintf("token %s", os.Getenv("AL_GITHUB_TOKEN")))
-	return http.DefaultTransport.RoundTrip(req)
-}
-
-type gitRepo struct {
-	URL   string
-	Owner string
-	Repo  string
-}
-
-func getGitRepo() *gitRepo {
-	output, err := exec.Command("git", "remote", "-v").CombinedOutput()
-	if err != nil {
-		panic(string(output))
-	}
-
-	r := regexp.MustCompile("https://(.*)/(.*)/(.*).git")
-	matches := r.FindStringSubmatch(string(output))
-
-	return &gitRepo{
-		URL:   fmt.Sprintf("https://%s:%s@%s/%s/%s.git", os.Getenv("AL_GITHUB_USER"), os.Getenv("AL_GITHUB_TOKEN"), matches[1], matches[2], matches[3]),
-		Owner: matches[2],
-		Repo:  matches[3],
-	}
-}
 
 func tagDate() string {
 	return time.Now().Format("20060102T150405")
@@ -71,10 +42,7 @@ func createRelease() {
 	log.Printf("git tag '%s' created and pushed to origin", tag)
 
 	log.Printf("create release '%s'", tag)
-	httpClient := http.Client{
-		Transport: &gitTransport{},
-	}
-	client := github.NewClient(&httpClient)
+	client := getGithubClient()
 	release, _, err := client.Repositories.CreateRelease(context.TODO(), repo.Owner, repo.Repo, &github.RepositoryRelease{
 		TagName: &tag,
 		Name:    &tag,

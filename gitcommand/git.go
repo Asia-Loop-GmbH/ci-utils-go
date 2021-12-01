@@ -11,6 +11,8 @@ func GitCommand() {
 	switch subCommand {
 	case "create-release":
 		createRelease()
+	case "list-releases":
+		listReleases()
 	default:
 		log.Panicf("unsupported subcommand '%s' for 'git'", subCommand)
 	}
