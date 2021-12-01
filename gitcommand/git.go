@@ -13,6 +13,8 @@ func GitCommand() {
 		createRelease()
 	case "list-releases":
 		listReleases()
+	case "download-release":
+		downloadRelease()
 	default:
 		log.Panicf("unsupported subcommand '%s' for 'git'", subCommand)
 	}

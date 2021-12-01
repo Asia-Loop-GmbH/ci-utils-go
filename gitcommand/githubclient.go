@@ -13,8 +13,11 @@ func (trans *gitTransport) RoundTrip(req *http.Request) (*http.Response, error) 
 }
 
 func getGithubClient() *github.Client {
-	httpClient := http.Client{
+	return github.NewClient(getGithubHttpClient())
+}
+
+func getGithubHttpClient() *http.Client {
+	return &http.Client{
 		Transport: &gitTransport{},
 	}
-	return github.NewClient(&httpClient)
 }
