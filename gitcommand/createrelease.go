@@ -22,6 +22,7 @@ func (trans *gitTransport) RoundTrip(req *http.Request) (*http.Response, error) 
 }
 
 type gitRepo struct {
+	URL   string
 	Owner string
 	Repo  string
 }
@@ -34,7 +35,9 @@ func getGitRepo() *gitRepo {
 
 	r := regexp.MustCompile("https://(.*)/(.*)/(.*).git")
 	matches := r.FindStringSubmatch(string(output))
+
 	return &gitRepo{
+		URL:   fmt.Sprintf("https://%s:%s@%s/%s/%s.git", os.Getenv("AL_GITHUB_USER"), os.Getenv("AL_GITHUB_TOKEN"), matches[1], matches[2], matches[3]),
 		Owner: matches[2],
 		Repo:  matches[3],
 	}
@@ -54,19 +57,20 @@ func createRelease() {
 	artifact := fmt.Sprintf("target/%s", artifactName)
 	log.Printf("version '%s' will be created with artifact '%s'", tag, artifact)
 
+	repo := getGitRepo()
+
 	log.Printf("create git tag '%s'", tag)
 	out, err := exec.Command("git", "tag", tag).CombinedOutput()
 	if err != nil {
 		panic(string(out))
 	}
-	out, err = exec.Command("git", "push", "origin", tag).CombinedOutput()
+	out, err = exec.Command("git", "push", repo.URL, tag).CombinedOutput()
 	if err != nil {
 		panic(string(out))
 	}
 	log.Printf("git tag '%s' created and pushed to origin", tag)
 
 	log.Printf("create release '%s'", tag)
-	repo := getGitRepo()
 	httpClient := http.Client{
 		Transport: &gitTransport{},
 	}
