@@ -8,6 +8,7 @@ import (
 	"io/fs"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 )
 
@@ -32,8 +33,8 @@ func downloadRelease() {
 	}
 	assetId := int64(0)
 	for _, asset := range release.Assets {
-		if asset.GetName() == *assetName {
-			assetId = asset.GetID()
+		if *asset.Name == *assetName {
+			assetId = *asset.ID
 		}
 	}
 
@@ -41,7 +42,7 @@ func downloadRelease() {
 		log.Panicf("could not find asset '%s' from release '%d'", *assetName, *releaseId)
 	}
 
-	download, _, err := client.Repositories.DownloadReleaseAsset(context.TODO(), *owner, *repo, assetId, getGithubHttpClient())
+	download, _, err := client.Repositories.DownloadReleaseAsset(context.TODO(), *owner, *repo, assetId, http.DefaultClient)
 	if err != nil {
 		panic(err)
 	}
